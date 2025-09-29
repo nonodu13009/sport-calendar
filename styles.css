@@ -734,14 +734,23 @@ select:focus {
   font-weight: 600;
   box-shadow: 0 15px 25px rgba(0, 0, 0, 0.35);
   overflow: hidden;
-  cursor: pointer;
+  cursor: grab;
   transition: all 0.2s ease;
 }
 
 .session-block:hover {
   transform: scale(1.05);
-  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 24px 40px rgba(0, 0, 0, 0.5);
   z-index: 10;
+}
+
+.session-block:hover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.6);
 }
 
 .session-block:hover::after {
@@ -757,6 +766,19 @@ select:focus {
   font-size: 0.7rem;
   white-space: nowrap;
   z-index: 20;
+}
+
+.session-block:active {
+  cursor: grabbing;
+}
+
+.session-block.is-dragging {
+  opacity: 0.6;
+  transform: scale(1.03);
+  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.45);
+  cursor: grabbing;
+  pointer-events: none;
+  z-index: 30;
 }
 
 .session-block span {

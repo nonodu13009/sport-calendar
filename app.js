@@ -382,7 +382,7 @@ function populateSelect(select, options) {
   });
 }
 
-function populateChips(container, options) {
+function populateChips(container, options, isExclusive = false) {
   container.innerHTML = '';
   options.forEach((option) => {
     const chip = document.createElement('button');
@@ -390,7 +390,14 @@ function populateChips(container, options) {
     chip.className = 'chip';
     chip.textContent = option;
     chip.addEventListener('click', () => {
-      chip.classList.toggle('selected');
+      if (isExclusive) {
+        // Pour les tags exclusifs (comme le type de séance), désélectionner les autres
+        container.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+      } else {
+        // Pour les tags multiples (intensité, sensations), toggle
+        chip.classList.toggle('selected');
+      }
     });
     container.appendChild(chip);
   });
@@ -402,6 +409,7 @@ const sessionStartInput = document.getElementById('session-start');
 const sessionDurationInput = document.getElementById('session-duration');
 const intensityContainer = document.getElementById('intensity-tags');
 const feelingContainer = document.getElementById('feeling-tags');
+const sessionTypeContainer = document.getElementById('session-type-tags');
 const sessionModal = document.getElementById('session-modal');
 const modalTitle = document.getElementById('modal-title');
 const modalSubtitle = document.getElementById('modal-subtitle');
@@ -412,6 +420,7 @@ const aiSuggestButton = document.getElementById('ai-suggest');
 populateSelect(sessionSportSelect, sports.map((sport) => sport.name));
 populateChips(intensityContainer, intensityOptions);
 populateChips(feelingContainer, feelingOptions);
+populateChips(sessionTypeContainer, ['Planification', 'Reporting'], true);
 updateModalForSport(sports[0]);
 
 sessionSportSelect.addEventListener('change', () => {
@@ -446,6 +455,16 @@ function openSessionModal({ sportId, start }) {
   });
   intensityContainer.querySelectorAll('.chip').forEach((chip) => chip.classList.remove('selected'));
   feelingContainer.querySelectorAll('.chip').forEach((chip) => chip.classList.remove('selected'));
+  
+  // Détection automatique du type de séance selon l'heure
+  const sessionTime = new Date(start);
+  const currentTime = new Date();
+  const isPast = sessionTime < currentTime;
+  
+  sessionTypeContainer.querySelectorAll('.chip').forEach((chip) => chip.classList.remove('selected'));
+  const defaultType = isPast ? 'completed' : 'planned';
+  sessionTypeContainer.querySelector(`.chip[data-value="${defaultType}"]`).classList.add('selected');
+  
   aiSuggestion.classList.add('hidden');
   aiSuggestion.textContent = '';
   sessionModal.classList.remove('hidden');
@@ -458,7 +477,8 @@ function closeSessionModal() {
   sessionDurationInput.value = 60;
   intensityContainer.querySelectorAll('.chip').forEach((chip) => chip.classList.remove('selected'));
   feelingContainer.querySelectorAll('.chip').forEach((chip) => chip.classList.remove('selected'));
-  document.querySelector('input[name="session-status"][value="planned"]').checked = true;
+  sessionTypeContainer.querySelectorAll('.chip').forEach((chip) => chip.classList.remove('selected'));
+  sessionTypeContainer.querySelector('.chip[data-value="planned"]').classList.add('selected');
   // Supprimer l'ID de session stocké
   delete sessionModal.dataset.sessionId;
 }
@@ -490,7 +510,8 @@ function openSessionModalForEdit(session) {
   });
   
   // Sélectionner le statut
-  document.querySelector(`input[name="session-status"][value="${session.status}"]`).checked = true;
+  sessionTypeContainer.querySelectorAll('.chip').forEach((chip) => chip.classList.remove('selected'));
+  sessionTypeContainer.querySelector(`.chip[data-value="${session.status}"]`).classList.add('selected');
   
   // Mettre à jour le titre de la modale
   modalTitle.textContent = `Modifier ${sport.name}`;
@@ -520,7 +541,7 @@ async function saveSession(event) {
   if (!currentUser) return;
 
   const sport = sports.find((item) => item.name === sessionSportSelect.value);
-  const status = document.querySelector('input[name="session-status"]:checked').value;
+  const status = sessionTypeContainer.querySelector('.chip.selected').dataset.value;
   const startDate = new Date(sessionStartInput.value);
   const duration = Number(sessionDurationInput.value) || 60;
   const intensity = Array.from(intensityContainer.querySelectorAll('.chip.selected')).map(
@@ -582,6 +603,18 @@ async function moveSession(sessionData, newStartTime) {
     console.error('Erreur lors du déplacement de la session:', error);
     alert("Impossible de déplacer la séance. Réessaie plus tard.");
   }
+}
+
+function updateWeeklyKPI() {
+  const totalSessions = sessionsCache.length;
+  const totalDuration = sessionsCache.reduce((sum, session) => sum + session.duration, 0);
+  const plannedSessions = sessionsCache.filter(session => session.status === 'planned').length;
+  const completedSessions = sessionsCache.filter(session => session.status === 'completed').length;
+  
+  document.getElementById('total-sessions').textContent = totalSessions;
+  document.getElementById('total-duration').textContent = `${Math.round(totalDuration / 60)}h`;
+  document.getElementById('planned-sessions').textContent = plannedSessions;
+  document.getElementById('completed-sessions').textContent = completedSessions;
 }
 
 function renderSessions() {
@@ -662,6 +695,9 @@ function renderSessions() {
 
     targetCell.appendChild(block);
   });
+  
+  // Mettre à jour les KPI après le rendu
+  updateWeeklyKPI();
 }
 
 function subscribeToSessions() {
@@ -783,7 +819,7 @@ aiForm.addEventListener('submit', async (event) => {
 aiSuggestButton.addEventListener('click', async () => {
   const sport = sports.find((item) => item.name === sessionSportSelect.value);
   const start = new Date(sessionStartInput.value);
-  const status = document.querySelector('input[name="session-status"]:checked').value;
+  const status = sessionTypeContainer.querySelector('.chip.selected').dataset.value;
   const context = `Je prépare une séance de ${sport.name} (${sport.id}) ${
     status === 'planned' ? 'planifiée' : 'déjà réalisée'
   } le ${start.toLocaleString('fr-FR', {

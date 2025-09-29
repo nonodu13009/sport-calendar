@@ -503,6 +503,35 @@ select:focus {
   align-items: center;
 }
 
+.weekly-kpi {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.kpi-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.kpi-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.kpi-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .calendar-legend {
   display: flex;
   gap: 0.75rem;
@@ -705,6 +734,29 @@ select:focus {
   font-weight: 600;
   box-shadow: 0 15px 25px rgba(0, 0, 0, 0.35);
   overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.session-block:hover {
+  transform: scale(1.05);
+  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.45);
+  z-index: 10;
+}
+
+.session-block:hover::after {
+  content: "✏️ Cliquer pour modifier";
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  z-index: 20;
 }
 
 .session-block span {

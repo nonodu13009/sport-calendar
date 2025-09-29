@@ -108,6 +108,24 @@
 
           <section class="calendar-area">
             <div class="calendar-header">
+              <div class="weekly-kpi">
+                <div class="kpi-item">
+                  <span class="kpi-value" id="total-sessions">0</span>
+                  <span class="kpi-label">Séances</span>
+                </div>
+                <div class="kpi-item">
+                  <span class="kpi-value" id="total-duration">0h</span>
+                  <span class="kpi-label">Durée</span>
+                </div>
+                <div class="kpi-item">
+                  <span class="kpi-value" id="planned-sessions">0</span>
+                  <span class="kpi-label">Planifiées</span>
+                </div>
+                <div class="kpi-item">
+                  <span class="kpi-value" id="completed-sessions">0</span>
+                  <span class="kpi-label">Réalisées</span>
+                </div>
+              </div>
               <div class="calendar-legend">
                 <div class="legend-item planning">Planifiée</div>
                 <div class="legend-item completed">Réalisée</div>
@@ -178,13 +196,12 @@
               <div id="feeling-tags" class="chips"></div>
             </div>
             <div id="ai-suggestion" class="ai-suggestion hidden"></div>
-            <div class="session-type">
-              <label>
-                <input type="radio" name="session-status" value="planned" checked /> Planification
-              </label>
-              <label>
-                <input type="radio" name="session-status" value="completed" /> Reporting
-              </label>
+            <div class="chips-group">
+              <p class="chips-title">Type de séance</p>
+              <div id="session-type-tags" class="chips">
+                <button type="button" class="chip selected" data-value="planned">Planification</button>
+                <button type="button" class="chip" data-value="completed">Reporting</button>
+              </div>
             </div>
             <div class="modal-actions">
               <button type="button" class="ghost" id="ai-suggest">Proposer avec l'IA</button>

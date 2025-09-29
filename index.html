@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sport Calendar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="background-gradient"></div>
+    <div id="app" class="app-shell">
+      <div class="auth-card" id="auth-view">
+        <div class="auth-hero">
+          <h1>Sport<span>Flow</span></h1>
+          <p>
+            Planifie tes entraînements, visualise ta progression et laisse notre
+            IA t'aider à construire des séances mémorables.
+          </p>
+        </div>
+        <div class="auth-forms">
+          <div class="tabs">
+            <button class="tab active" data-target="login-form">Connexion</button>
+            <button class="tab" data-target="signup-form">Créer un compte</button>
+          </div>
+          <form id="login-form" class="form active">
+            <label>Email</label>
+            <input type="email" id="login-email" placeholder="email@exemple.com" required />
+            <label>Mot de passe</label>
+            <input type="password" id="login-password" placeholder="••••••••" required />
+            <button type="submit" class="primary">Se connecter</button>
+            <p class="auth-hint">Mot de passe oublié ? <a href="#" id="reset-link">Réinitialiser</a></p>
+          </form>
+          <form id="signup-form" class="form">
+            <label>Nom</label>
+            <input type="text" id="signup-name" placeholder="Prénom Nom" required />
+            <label>Email</label>
+            <input type="email" id="signup-email" placeholder="email@exemple.com" required />
+            <label>Mot de passe</label>
+            <input type="password" id="signup-password" placeholder="••••••••" minlength="6" required />
+            <button type="submit" class="primary">Créer mon compte</button>
+          </form>
+        </div>
+      </div>
+
+      <main id="dashboard" class="dashboard hidden">
+        <header class="topbar">
+          <div class="brand">Sport<span>Flow</span></div>
+          <div class="topbar-actions">
+            <div class="start-week-selector">
+              <label for="week-start">Semaine à partir de</label>
+              <select id="week-start">
+                <option value="1" selected>Lundi</option>
+                <option value="0">Dimanche</option>
+                <option value="2">Mardi</option>
+                <option value="3">Mercredi</option>
+                <option value="4">Jeudi</option>
+                <option value="5">Vendredi</option>
+                <option value="6">Samedi</option>
+              </select>
+            </div>
+            <button id="logout" class="ghost">Déconnexion</button>
+          </div>
+        </header>
+
+        <section class="planner">
+          <aside class="sports-palette">
+            <div class="palette-header">
+              <h2>Tes sports</h2>
+              <button id="ai-builder" class="icon-button" title="Assistant séance">
+                <span aria-hidden="true">🤖</span>
+              </button>
+            </div>
+            <p class="palette-subtitle">Glisse la pastille sur le créneau souhaité.</p>
+            <div id="sports-list" class="sports-list"></div>
+          </aside>
+
+          <section class="calendar-area">
+            <div class="calendar-header">
+              <div class="calendar-legend">
+                <div class="legend-item planning">Planifiée</div>
+                <div class="legend-item completed">Réalisée</div>
+              </div>
+              <button id="ai-chat-trigger" class="icon-button" title="Coach IA">
+                <span aria-hidden="true">💬</span>
+              </button>
+              <div class="calendar-navigation">
+                <button id="prev-week" class="nav-button">⟵ Semaine</button>
+                <div class="current-period">
+                  <h2 id="current-week"></h2>
+                  <p id="current-month"></p>
+                </div>
+                <button id="next-week" class="nav-button">Semaine ⟶</button>
+              </div>
+              <button id="month-picker" class="ghost">Changer de mois</button>
+            </div>
+            <div class="calendar-grid" id="calendar-grid"></div>
+          </section>
+        </section>
+      </main>
+
+      <div id="session-modal" class="modal hidden" role="dialog" aria-modal="true">
+        <div class="modal-content">
+          <button class="icon-button close" id="close-modal" aria-label="Fermer">✕</button>
+          <div class="modal-header">
+            <div class="modal-icon" id="modal-icon">🥋</div>
+            <div>
+              <h3 id="modal-title">Nouvelle séance</h3>
+              <p id="modal-subtitle"></p>
+            </div>
+          </div>
+          <form id="session-form">
+            <div class="form-grid">
+              <label>
+                Sport
+                <select id="session-sport" required></select>
+              </label>
+              <label>
+                Variation
+                <select id="session-variation" required></select>
+              </label>
+              <label>
+                Début
+                <input type="datetime-local" id="session-start" required />
+              </label>
+              <label>
+                Durée (minutes)
+                <input type="number" id="session-duration" min="15" step="15" value="60" />
+              </label>
+            </div>
+            <div class="chips-group">
+              <p class="chips-title">Intensité</p>
+              <div id="intensity-tags" class="chips"></div>
+            </div>
+            <div class="chips-group">
+              <p class="chips-title">Sensations</p>
+              <div id="feeling-tags" class="chips"></div>
+            </div>
+            <div id="ai-suggestion" class="ai-suggestion hidden"></div>
+            <div class="session-type">
+              <label>
+                <input type="radio" name="session-status" value="planned" checked /> Planification
+              </label>
+              <label>
+                <input type="radio" name="session-status" value="completed" /> Reporting
+              </label>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="ghost" id="ai-suggest">Proposer avec l'IA</button>
+              <button type="submit" class="primary">Enregistrer</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div id="ai-panel" class="ai-panel hidden">
+        <div class="ai-header">
+          <h3>Coach IA</h3>
+          <button class="icon-button" id="close-ai">✕</button>
+        </div>
+        <div id="ai-messages" class="ai-messages"></div>
+        <form id="ai-form" class="ai-form">
+          <input id="ai-input" type="text" placeholder="Pose ta question ou demande une séance..." required />
+          <button type="submit" class="primary">Envoyer</button>
+        </form>
+      </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

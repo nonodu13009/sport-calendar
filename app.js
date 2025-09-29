@@ -17,6 +17,8 @@ import {
   orderBy,
   onSnapshot,
   serverTimestamp,
+  doc,
+  updateDoc,
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -94,7 +96,6 @@ const aiInput = document.getElementById('ai-input');
 const aiSuggestion = document.getElementById('ai-suggestion');
 const themeToggleButtons = [
   document.getElementById('theme-toggle'),
-  document.getElementById('dashboard-theme-toggle'),
 ].filter(Boolean);
 
 const THEME_STORAGE_KEY = 'sportflow-theme';
@@ -215,19 +216,70 @@ function renderCalendar() {
   const body = document.createElement('div');
   body.className = 'calendar-body';
 
-  for (let slot = 0; slot < 96; slot += 1) {
-    const row = document.createElement('div');
-    row.className = 'time-row';
+  // Affichage par défaut : 8h à 21h (52 slots de 15min)
+  const defaultStartSlot = 8 * 4; // 8h = slot 32
+  const defaultEndSlot = 21 * 4; // 21h = slot 84
+  const totalSlots = 96; // 24h * 4 slots/heure
 
-    const timeCell = document.createElement('div');
-    timeCell.className = 'time-cell';
-    const hours = Math.floor(slot / 4);
-    const minutes = (slot % 4) * 15;
-    const label = `${hours.toString().padStart(2, '0')}:${minutes
-      .toString()
-      .padStart(2, '0')}`;
-    timeCell.textContent = label;
-    row.appendChild(timeCell);
+  // Créer les boutons d'expansion
+  const expandButton = document.createElement('div');
+  expandButton.className = 'time-expand-button';
+  expandButton.innerHTML = '⬆️';
+  expandButton.title = 'Afficher les heures supplémentaires (0h-8h)';
+  expandButton.addEventListener('click', () => toggleTimeRange('early'));
+  
+  const expandButtonLate = document.createElement('div');
+  expandButtonLate.className = 'time-expand-button';
+  expandButtonLate.innerHTML = '⬇️';
+  expandButtonLate.title = 'Afficher les heures supplémentaires (21h-24h)';
+  expandButtonLate.addEventListener('click', () => toggleTimeRange('late'));
+
+  // Fonction pour basculer l'affichage des heures
+  function toggleTimeRange(period) {
+    const isExpanded = document.body.classList.contains(`expanded-${period}`);
+    if (isExpanded) {
+      document.body.classList.remove(`expanded-${period}`);
+      renderTimeSlots(defaultStartSlot, defaultEndSlot);
+    } else {
+      document.body.classList.add(`expanded-${period}`);
+      if (period === 'early') {
+        renderTimeSlots(0, defaultEndSlot);
+      } else {
+        renderTimeSlots(defaultStartSlot, totalSlots);
+      }
+    }
+  }
+
+  // Fonction pour rendre les créneaux horaires
+  function renderTimeSlots(startSlot, endSlot) {
+    // Supprimer les anciens créneaux
+    body.querySelectorAll('.time-row').forEach(row => row.remove());
+    
+    for (let slot = startSlot; slot < endSlot; slot += 1) {
+      const row = document.createElement('div');
+      row.className = 'time-row';
+
+      const timeCell = document.createElement('div');
+      timeCell.className = 'time-cell';
+      const hours = Math.floor(slot / 4);
+      const minutes = (slot % 4) * 15;
+      
+      // Afficher les heures pleines et demi-heures
+      let label = '';
+      if (minutes === 0) {
+        label = `${hours.toString().padStart(2, '0')}:00`;
+        timeCell.classList.add('hour-mark');
+      } else if (minutes === 30) {
+        label = `${hours.toString().padStart(2, '0')}:30`;
+        timeCell.classList.add('half-hour-mark');
+      } else {
+        // Pour les quarts d'heure, afficher un point discret
+        label = '•';
+        timeCell.classList.add('quarter-mark');
+      }
+      
+      timeCell.textContent = label;
+      row.appendChild(timeCell);
 
     days.forEach((dayDate, dayIndex) => {
       const dropCell = document.createElement('div');
@@ -244,23 +296,39 @@ function renderCalendar() {
 
       dropCell.addEventListener('dragover', (event) => {
         event.preventDefault();
-        dropCell.classList.add('highlight');
+        
+        // Effet spécial pour les quarts d'heure (15min et 45min)
+        if (minutes === 15 || minutes === 45) {
+          dropCell.classList.add('quarter-highlight');
+        } else {
+          dropCell.classList.add('highlight');
+        }
       });
 
       dropCell.addEventListener('dragleave', () => {
-        dropCell.classList.remove('highlight');
+        dropCell.classList.remove('highlight', 'quarter-highlight');
       });
 
       dropCell.addEventListener('drop', (event) => {
         event.preventDefault();
-        dropCell.classList.remove('highlight');
-        const sportId = event.dataTransfer.getData('text/plain');
-        const sport = sports.find((item) => item.id === sportId);
-        if (!sport) return;
-        openSessionModal({
-          sportId,
-          start: dropCell.dataset.datetime,
-        });
+        dropCell.classList.remove('highlight', 'quarter-highlight');
+        
+        const dataType = event.dataTransfer.getData('text/plain');
+        
+        if (dataType === 'session') {
+          // Déplacer une session existante
+          const sessionData = JSON.parse(event.dataTransfer.getData('application/json'));
+          moveSession(sessionData, dropCell.dataset.datetime);
+        } else {
+          // Créer une nouvelle session
+          const sportId = dataType;
+          const sport = sports.find((item) => item.id === sportId);
+          if (!sport) return;
+          openSessionModal({
+            sportId,
+            start: dropCell.dataset.datetime,
+          });
+        }
       });
 
       row.appendChild(dropCell);
@@ -268,6 +336,16 @@ function renderCalendar() {
 
     body.appendChild(row);
   }
+  }
+
+  // Rendre les créneaux par défaut (8h-21h)
+  renderTimeSlots(defaultStartSlot, defaultEndSlot);
+
+  // Ajouter le bouton d'expansion en haut
+  body.insertBefore(expandButton, body.firstChild);
+  
+  // Ajouter le bouton d'expansion en bas
+  body.appendChild(expandButtonLate);
 
   calendarGrid.appendChild(body);
   requestAnimationFrame(() => {
@@ -351,7 +429,7 @@ function updateModalForSport(sport) {
   });
   modalIcon.innerHTML = `<span class="material-symbols-rounded" aria-hidden="true">${sport.icon}</span>`;
   modalIcon.style.background = sport.color;
-  modalTitle.textContent = `${sport.name}`;
+  modalTitle.textContent = `Nouvelle séance - ${sport.name}`;
 }
 
 function openSessionModal({ sportId, start }) {
@@ -375,6 +453,54 @@ function openSessionModal({ sportId, start }) {
 
 function closeSessionModal() {
   sessionModal.classList.add('hidden');
+  // Réinitialiser le formulaire
+  document.getElementById('session-form').reset();
+  sessionDurationInput.value = 60;
+  intensityContainer.querySelectorAll('.chip').forEach((chip) => chip.classList.remove('selected'));
+  feelingContainer.querySelectorAll('.chip').forEach((chip) => chip.classList.remove('selected'));
+  document.querySelector('input[name="session-status"][value="planned"]').checked = true;
+  // Supprimer l'ID de session stocké
+  delete sessionModal.dataset.sessionId;
+}
+
+function openSessionModalForEdit(session) {
+  const sport = sports.find((item) => item.id === session.sportId);
+  if (!sport) return;
+  
+  // Pré-remplir le formulaire avec les données de la session
+  sessionSportSelect.value = sport.name;
+  updateModalForSport(sport);
+  sessionVariationSelect.value = session.variation;
+  sessionStartInput.value = toDateTimeLocalValue(new Date(session.start));
+  sessionDurationInput.value = session.duration;
+  
+  // Sélectionner les chips d'intensité
+  intensityContainer.querySelectorAll('.chip').forEach((chip) => {
+    chip.classList.toggle('selected', session.intensity.includes(chip.textContent));
+  });
+  
+  // Sélectionner les chips de sensations
+  feelingContainer.querySelectorAll('.chip').forEach((chip) => {
+    chip.classList.toggle('selected', session.feelings.includes(chip.textContent));
+  });
+  
+  // Sélectionner le statut
+  document.querySelector(`input[name="session-status"][value="${session.status}"]`).checked = true;
+  
+  // Mettre à jour le titre de la modale
+  modalTitle.textContent = `Modifier ${sport.name}`;
+  modalSubtitle.textContent = new Date(session.start).toLocaleString('fr-FR', {
+    weekday: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  
+  // Stocker l'ID de la session pour la mise à jour
+  sessionModal.dataset.sessionId = session.id;
+  
+  aiSuggestion.classList.add('hidden');
+  aiSuggestion.textContent = '';
+  sessionModal.classList.remove('hidden');
 }
 
 closeModalButton.addEventListener('click', closeSessionModal);
@@ -413,15 +539,39 @@ async function saveSession(event) {
   };
 
   try {
-    await addDoc(collection(db, 'sessions'), payload);
+    const sessionId = sessionModal.dataset.sessionId;
+    
+    if (sessionId) {
+      // Mise à jour d'une session existante
+      const sessionRef = doc(db, 'sessions', sessionId);
+      await updateDoc(sessionRef, payload);
+    } else {
+      // Création d'une nouvelle session
+      await addDoc(collection(db, 'sessions'), payload);
+    }
+    
     closeSessionModal();
   } catch (error) {
-    console.error(error);
+    console.error('Erreur lors de la sauvegarde:', error);
     alert("Impossible d'enregistrer la séance. Réessaie plus tard.");
   }
 }
 
 document.getElementById('session-form').addEventListener('submit', saveSession);
+
+async function moveSession(sessionData, newStartTime) {
+  if (!currentUser) return;
+  
+  try {
+    const sessionRef = doc(db, 'sessions', sessionData.id);
+    await updateDoc(sessionRef, {
+      start: new Date(newStartTime).toISOString(),
+    });
+  } catch (error) {
+    console.error('Erreur lors du déplacement de la session:', error);
+    alert("Impossible de déplacer la séance. Réessaie plus tard.");
+  }
+}
 
 function renderSessions() {
   calendarGrid.querySelectorAll('.session-block').forEach((block) => block.remove());
@@ -429,10 +579,34 @@ function renderSessions() {
     const startDate = new Date(session.start);
     const dayIndex = Math.floor((startDate - selectedWeekStart) / (1000 * 60 * 60 * 24));
     if (dayIndex < 0 || dayIndex > 6) return;
-    const startSlot = startDate.getHours() * 4 + Math.floor(startDate.getMinutes() / 15);
+    
+    // Calculer le slot absolu (0-95 pour 24h)
+    const absoluteStartSlot = startDate.getHours() * 4 + Math.floor(startDate.getMinutes() / 15);
     const slots = Math.max(1, Math.round(session.duration / 15));
+    
+    // Vérifier si le slot est visible dans la plage actuelle
+    const isExpandedEarly = document.body.classList.contains('expanded-early');
+    const isExpandedLate = document.body.classList.contains('expanded-late');
+    
+    let isVisible = false;
+    if (isExpandedEarly && isExpandedLate) {
+      // Toutes les heures sont visibles
+      isVisible = true;
+    } else if (isExpandedEarly) {
+      // 0h-21h visibles
+      isVisible = absoluteStartSlot >= 0 && absoluteStartSlot < 84;
+    } else if (isExpandedLate) {
+      // 8h-24h visibles
+      isVisible = absoluteStartSlot >= 32 && absoluteStartSlot < 96;
+    } else {
+      // 8h-21h visibles (par défaut)
+      isVisible = absoluteStartSlot >= 32 && absoluteStartSlot < 84;
+    }
+    
+    if (!isVisible) return;
+    
     const targetCell = calendarGrid.querySelector(
-      `.drop-cell[data-day-index="${dayIndex}"][data-slot="${startSlot}"]`,
+      `.drop-cell[data-day-index="${dayIndex}"][data-slot="${absoluteStartSlot}"]`,
     );
     if (!targetCell) return;
 
@@ -442,6 +616,9 @@ function renderSessions() {
     block.style.background = session.status === 'completed'
       ? 'linear-gradient(135deg, rgba(68, 255, 161, 0.85), rgba(32, 201, 151, 0.95))'
       : 'linear-gradient(135deg, rgba(123, 92, 255, 0.8), rgba(38, 212, 255, 0.9))';
+    block.draggable = true;
+    block.dataset.sessionId = session.id;
+    block.dataset.sessionData = JSON.stringify(session);
     block.innerHTML = `
       <strong>${session.sportName}</strong>
       <span>${session.variation}</span>
@@ -453,6 +630,25 @@ function renderSessions() {
         <span>${session.duration} min</span>
       </div>
     `;
+
+    // Ajouter les événements de drag & drop pour les sessions
+    block.addEventListener('dragstart', (event) => {
+      event.dataTransfer.setData('text/plain', 'session');
+      event.dataTransfer.setData('application/json', JSON.stringify(session));
+      event.dataTransfer.effectAllowed = 'move';
+      block.style.opacity = '0.5';
+    });
+
+    block.addEventListener('dragend', () => {
+      block.style.opacity = '1';
+    });
+
+    // Ajouter l'événement de clic pour modifier la session
+    block.addEventListener('click', (event) => {
+      event.stopPropagation();
+      openSessionModalForEdit(session);
+    });
+
     targetCell.appendChild(block);
   });
 }
@@ -464,22 +660,30 @@ function subscribeToSessions() {
   const weekEnd = new Date(selectedWeekStart);
   weekEnd.setDate(weekEnd.getDate() + 7);
 
+  // Requête ultra-simplifiée pour éviter tout problème d'index
   const sessionsQuery = query(
     collection(db, 'sessions'),
     where('userId', '==', currentUser.uid),
-    where('start', '>=', selectedWeekStart.toISOString()),
-    where('start', '<', weekEnd.toISOString()),
-    orderBy('start', 'asc'),
   );
 
   unsubscribeSessions = onSnapshot(
     sessionsQuery,
     (snapshot) => {
-      sessionsCache = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+      // Filtrer côté client pour la semaine courante
+      const weekEnd = new Date(selectedWeekStart);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+      
+      sessionsCache = snapshot.docs
+        .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+        .filter((session) => {
+          const sessionDate = new Date(session.start);
+          return sessionDate >= selectedWeekStart && sessionDate < weekEnd;
+        })
+        .sort((a, b) => new Date(a.start) - new Date(b.start));
       renderSessions();
     },
     (error) => {
-      console.error(error);
+      console.error('Erreur lors de la récupération des sessions:', error);
     },
   );
 }

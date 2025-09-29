@@ -36,42 +36,42 @@ const sports = [
   {
     id: 'judo',
     name: 'Judo',
-    icon: '🥋',
+    icon: 'sports_martial_arts',
     color: 'linear-gradient(135deg, #7b5cff, #5a3bff)',
     variations: ['Ne-waza', 'Randori', 'Technique', 'Kumi-kata', 'Conditioning'],
   },
   {
     id: 'jjb',
     name: 'Jiu-Jitsu Brésilien',
-    icon: '🥋',
+    icon: 'sports_mma',
     color: 'linear-gradient(135deg, #5af8b9, #2ec4a3)',
     variations: ['Drill', 'Sparring', 'Passages de garde', 'Soumissions', 'Escapes'],
   },
   {
     id: 'strength',
     name: 'Musculation',
-    icon: '🏋️',
+    icon: 'fitness_center',
     color: 'linear-gradient(135deg, #ff6b6b, #ff8e53)',
     variations: ['Force', 'Hypertrophie', 'Full body', 'Push/Pull', 'Core'],
   },
   {
     id: 'yoga',
     name: 'Yoga',
-    icon: '🧘',
+    icon: 'self_improvement',
     color: 'linear-gradient(135deg, #26d4ff, #84f2ff)',
     variations: ['Vinyasa', 'Hatha', 'Yin', 'Power', 'Respiration'],
   },
   {
     id: 'stretch',
     name: 'Stretching',
-    icon: '🤸',
+    icon: 'accessibility_new',
     color: 'linear-gradient(135deg, #ffb36b, #ffd56b)',
     variations: ['Mobilité', 'Souplesse', 'Recovery', 'Full body'],
   },
   {
     id: 'cardio',
     name: 'Cardio',
-    icon: '🏃',
+    icon: 'directions_run',
     color: 'linear-gradient(135deg, #00f2fe, #4facfe)',
     variations: ['HIIT', 'Endurance', 'Fractionné', 'Cyclisme', 'Course'],
   },
@@ -92,6 +92,52 @@ const aiMessages = document.getElementById('ai-messages');
 const aiForm = document.getElementById('ai-form');
 const aiInput = document.getElementById('ai-input');
 const aiSuggestion = document.getElementById('ai-suggestion');
+const themeToggleButtons = [
+  document.getElementById('theme-toggle'),
+  document.getElementById('dashboard-theme-toggle'),
+].filter(Boolean);
+
+const THEME_STORAGE_KEY = 'sportflow-theme';
+
+function updateThemeToggleButtons(theme) {
+  const isLight = theme === 'light';
+  const iconName = isLight ? 'dark_mode' : 'light_mode';
+  const label = isLight ? 'Activer le mode sombre' : 'Activer le mode clair';
+  themeToggleButtons.forEach((button) => {
+    button.setAttribute('aria-label', label);
+    button.setAttribute('title', label);
+    const iconElement = button.querySelector('.material-symbols-rounded');
+    if (iconElement) {
+      iconElement.textContent = iconName;
+    }
+  });
+}
+
+function applyTheme(theme) {
+  document.body.dataset.theme = theme;
+  updateThemeToggleButtons(theme);
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch (error) {
+    // Local storage may be unavailable (private mode, etc.)
+  }
+}
+
+let storedTheme = null;
+try {
+  storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+} catch (error) {
+  storedTheme = null;
+}
+
+applyTheme(storedTheme || 'dark');
+
+themeToggleButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    const nextTheme = document.body.dataset.theme === 'light' ? 'dark' : 'light';
+    applyTheme(nextTheme);
+  });
+});
 
 let currentUser = null;
 let startDay = Number(weekStartSelect.value);
@@ -114,7 +160,9 @@ function renderSports() {
     pill.draggable = true;
     pill.dataset.sportId = sport.id;
     pill.innerHTML = `
-      <div class="sport-icon" style="background:${sport.color}">${sport.icon}</div>
+      <div class="sport-icon" style="background:${sport.color}">
+        <span class="material-symbols-rounded" aria-hidden="true">${sport.icon}</span>
+      </div>
       <div class="sport-info">
         <h3>${sport.name}</h3>
         <p>${sport.variations[0]}</p>
@@ -301,7 +349,8 @@ function updateModalForSport(sport) {
     option.textContent = variation;
     sessionVariationSelect.appendChild(option);
   });
-  modalIcon.textContent = sport.icon;
+  modalIcon.innerHTML = `<span class="material-symbols-rounded" aria-hidden="true">${sport.icon}</span>`;
+  modalIcon.style.background = sport.color;
   modalTitle.textContent = `${sport.name}`;
 }
 
@@ -560,7 +609,10 @@ function attachAuthHandlers() {
   function togglePasswordVisibility(input, toggle) {
     const isPassword = input.type === 'password';
     input.type = isPassword ? 'text' : 'password';
-    toggle.textContent = isPassword ? '🙈' : '👁️';
+    const iconElement = toggle.querySelector('.material-symbols-rounded');
+    if (iconElement) {
+      iconElement.textContent = isPassword ? 'visibility_off' : 'visibility';
+    }
     toggle.setAttribute('aria-label', isPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
   }
 

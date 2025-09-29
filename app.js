@@ -470,18 +470,23 @@ function openSessionModalForEdit(session) {
   // Pré-remplir le formulaire avec les données de la session
   sessionSportSelect.value = sport.name;
   updateModalForSport(sport);
-  sessionVariationSelect.value = session.variation;
+  sessionVariationSelect.value = sport.variations.includes(session.variation)
+    ? session.variation
+    : sport.variations[0];
   sessionStartInput.value = toDateTimeLocalValue(new Date(session.start));
   sessionDurationInput.value = session.duration;
   
+  const selectedIntensity = Array.isArray(session.intensity) ? session.intensity : [];
+  const selectedFeelings = Array.isArray(session.feelings) ? session.feelings : [];
+
   // Sélectionner les chips d'intensité
   intensityContainer.querySelectorAll('.chip').forEach((chip) => {
-    chip.classList.toggle('selected', session.intensity.includes(chip.textContent));
+    chip.classList.toggle('selected', selectedIntensity.includes(chip.textContent));
   });
-  
+
   // Sélectionner les chips de sensations
   feelingContainer.querySelectorAll('.chip').forEach((chip) => {
-    chip.classList.toggle('selected', session.feelings.includes(chip.textContent));
+    chip.classList.toggle('selected', selectedFeelings.includes(chip.textContent));
   });
   
   // Sélectionner le statut
@@ -525,7 +530,7 @@ async function saveSession(event) {
     (chip) => chip.textContent,
   );
 
-  const payload = {
+  const basePayload = {
     userId: currentUser.uid,
     sportId: sport.id,
     sportName: sport.name,
@@ -535,19 +540,24 @@ async function saveSession(event) {
     intensity,
     feelings,
     status,
-    createdAt: serverTimestamp(),
   };
 
   try {
     const sessionId = sessionModal.dataset.sessionId;
-    
+
     if (sessionId) {
       // Mise à jour d'une session existante
       const sessionRef = doc(db, 'sessions', sessionId);
-      await updateDoc(sessionRef, payload);
+      await updateDoc(sessionRef, {
+        ...basePayload,
+        updatedAt: serverTimestamp(),
+      });
     } else {
       // Création d'une nouvelle session
-      await addDoc(collection(db, 'sessions'), payload);
+      await addDoc(collection(db, 'sessions'), {
+        ...basePayload,
+        createdAt: serverTimestamp(),
+      });
     }
     
     closeSessionModal();
@@ -561,11 +571,12 @@ document.getElementById('session-form').addEventListener('submit', saveSession);
 
 async function moveSession(sessionData, newStartTime) {
   if (!currentUser) return;
-  
+
   try {
     const sessionRef = doc(db, 'sessions', sessionData.id);
     await updateDoc(sessionRef, {
       start: new Date(newStartTime).toISOString(),
+      updatedAt: serverTimestamp(),
     });
   } catch (error) {
     console.error('Erreur lors du déplacement de la session:', error);

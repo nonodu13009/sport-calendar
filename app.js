@@ -160,13 +160,14 @@ function renderSports() {
     pill.className = 'sport-pill';
     pill.draggable = true;
     pill.dataset.sportId = sport.id;
+    pill.setAttribute('role', 'button');
+    pill.setAttribute('aria-label', `Planifier une séance de ${sport.name}`);
     pill.innerHTML = `
       <div class="sport-icon" style="background:${sport.color}">
         <span class="material-symbols-rounded" aria-hidden="true">${sport.icon}</span>
       </div>
       <div class="sport-info">
         <h3>${sport.name}</h3>
-        <p>${sport.variations[0]}</p>
       </div>
     `;
 
@@ -294,15 +295,26 @@ function renderCalendar() {
         minutes,
       ).toISOString();
 
-      dropCell.addEventListener('dragover', (event) => {
-        event.preventDefault();
-        
-        // Effet spécial pour les quarts d'heure (15min et 45min)
+      const highlightDropCell = () => {
         if (minutes === 15 || minutes === 45) {
           dropCell.classList.add('quarter-highlight');
         } else {
           dropCell.classList.add('highlight');
         }
+      };
+
+      dropCell.addEventListener('dragenter', (event) => {
+        if (!event.dataTransfer) return;
+        highlightDropCell();
+      });
+
+      dropCell.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        if (event.dataTransfer) {
+          const isSessionDrag = Array.from(event.dataTransfer.types || []).includes('application/json');
+          event.dataTransfer.dropEffect = isSessionDrag ? 'move' : 'copy';
+        }
+        highlightDropCell();
       });
 
       dropCell.addEventListener('dragleave', () => {
@@ -663,6 +675,15 @@ function renderSessions() {
     block.draggable = true;
     block.dataset.sessionId = session.id;
     block.dataset.sessionData = JSON.stringify(session);
+    block.setAttribute('role', 'button');
+    block.setAttribute(
+      'aria-label',
+      `${session.sportName} à ${new Date(session.start).toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      })} pour ${session.duration} minutes`,
+    );
+    block.tabIndex = 0;
     block.innerHTML = `
       <strong>${session.sportName}</strong>
       <span>${session.variation}</span>
@@ -680,17 +701,26 @@ function renderSessions() {
       event.dataTransfer.setData('text/plain', 'session');
       event.dataTransfer.setData('application/json', JSON.stringify(session));
       event.dataTransfer.effectAllowed = 'move';
-      block.style.opacity = '0.5';
+      block.classList.add('is-dragging');
+      block.setAttribute('aria-grabbed', 'true');
     });
 
     block.addEventListener('dragend', () => {
-      block.style.opacity = '1';
+      block.classList.remove('is-dragging');
+      block.removeAttribute('aria-grabbed');
     });
 
     // Ajouter l'événement de clic pour modifier la session
     block.addEventListener('click', (event) => {
       event.stopPropagation();
       openSessionModalForEdit(session);
+    });
+
+    block.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openSessionModalForEdit(session);
+      }
     });
 
     targetCell.appendChild(block);
@@ -773,7 +803,7 @@ async function callMistral(prompt) {
         {
           role: 'system',
           content:
-            "Tu es un coach sportif qui conçoit des entraînements personnalisés et motivants. Fournis des réponses structurées, avec des listes quand c'est pertinent.",
+            "Tu es un coach sportif qui conçoit des entraînements personnalisés et motivants. Fournis des réponses structurées, avec des listes quand c'est pertinent. Des fiches détaillées sont disponibles dans le dossier docs (Markdown) : appuie-toi dessus quand elles sont utiles pour répondre.",
         },
         { role: 'user', content: prompt },
       ],

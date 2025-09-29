@@ -10,9 +10,21 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0,0"
+    />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <button
+      id="theme-toggle"
+      class="theme-toggle icon-button"
+      type="button"
+      aria-label="Activer le mode clair"
+    >
+      <span class="material-symbols-rounded" aria-hidden="true">light_mode</span>
+    </button>
     <div class="background-gradient"></div>
     <div id="app" class="app-shell">
       <div class="auth-card" id="auth-view">
@@ -34,10 +46,15 @@
             <label>Mot de passe</label>
             <div class="password-input-container">
               <input type="password" id="login-password" placeholder="••••••••" required />
-              <button type="button" class="password-toggle" id="login-password-toggle" aria-label="Afficher le mot de passe">👁️</button>
+              <button type="button" class="password-toggle" id="login-password-toggle" aria-label="Afficher le mot de passe">
+                <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
+              </button>
             </div>
             <button type="submit" class="primary">Se connecter</button>
-            <button type="button" class="dev-login" id="dev-login-btn">🚀 Connexion rapide (dev)</button>
+            <button type="button" class="dev-login" id="dev-login-btn">
+              <span class="material-symbols-rounded" aria-hidden="true">rocket_launch</span>
+              Connexion rapide (dev)
+            </button>
             <p class="auth-hint">Mot de passe oublié ? <a href="#" id="reset-link">Réinitialiser</a></p>
           </form>
           <form id="signup-form" class="form">
@@ -48,7 +65,9 @@
             <label>Mot de passe</label>
             <div class="password-input-container">
               <input type="password" id="signup-password" placeholder="••••••••" minlength="6" required />
-              <button type="button" class="password-toggle" id="signup-password-toggle" aria-label="Afficher le mot de passe">👁️</button>
+              <button type="button" class="password-toggle" id="signup-password-toggle" aria-label="Afficher le mot de passe">
+                <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
+              </button>
             </div>
             <button type="submit" class="primary">Créer mon compte</button>
           </form>
@@ -71,6 +90,9 @@
                 <option value="6">Samedi</option>
               </select>
             </div>
+            <button id="dashboard-theme-toggle" class="icon-button" type="button" aria-label="Activer le mode clair">
+              <span class="material-symbols-rounded" aria-hidden="true">light_mode</span>
+            </button>
             <button id="logout" class="ghost">Déconnexion</button>
           </div>
         </header>
@@ -80,7 +102,7 @@
             <div class="palette-header">
               <h2>Tes sports</h2>
               <button id="ai-builder" class="icon-button" title="Assistant séance">
-                <span aria-hidden="true">🤖</span>
+                <span class="material-symbols-rounded" aria-hidden="true">robot_2</span>
               </button>
             </div>
             <p class="palette-subtitle">Glisse la pastille sur le créneau souhaité.</p>
@@ -94,15 +116,21 @@
                 <div class="legend-item completed">Réalisée</div>
               </div>
               <button id="ai-chat-trigger" class="icon-button" title="Coach IA">
-                <span aria-hidden="true">💬</span>
+                <span class="material-symbols-rounded" aria-hidden="true">forum</span>
               </button>
               <div class="calendar-navigation">
-                <button id="prev-week" class="nav-button">⟵ Semaine</button>
+                <button id="prev-week" class="nav-button">
+                  <span class="material-symbols-rounded" aria-hidden="true">chevron_left</span>
+                  Semaine
+                </button>
                 <div class="current-period">
                   <h2 id="current-week"></h2>
                   <p id="current-month"></p>
                 </div>
-                <button id="next-week" class="nav-button">Semaine ⟶</button>
+                <button id="next-week" class="nav-button">
+                  Semaine
+                  <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
+                </button>
               </div>
               <button id="month-picker" class="ghost">Changer de mois</button>
             </div>
@@ -113,9 +141,13 @@
 
       <div id="session-modal" class="modal hidden" role="dialog" aria-modal="true">
         <div class="modal-content">
-          <button class="icon-button close" id="close-modal" aria-label="Fermer">✕</button>
+          <button class="icon-button close" id="close-modal" aria-label="Fermer">
+            <span class="material-symbols-rounded" aria-hidden="true">close</span>
+          </button>
           <div class="modal-header">
-            <div class="modal-icon" id="modal-icon">🥋</div>
+            <div class="modal-icon" id="modal-icon">
+              <span class="material-symbols-rounded" aria-hidden="true">sports_martial_arts</span>
+            </div>
             <div>
               <h3 id="modal-title">Nouvelle séance</h3>
               <p id="modal-subtitle"></p>
@@ -168,7 +200,9 @@
       <div id="ai-panel" class="ai-panel hidden">
         <div class="ai-header">
           <h3>Coach IA</h3>
-          <button class="icon-button" id="close-ai">✕</button>
+          <button class="icon-button" id="close-ai" aria-label="Fermer le coach IA">
+            <span class="material-symbols-rounded" aria-hidden="true">close</span>
+          </button>
         </div>
         <div id="ai-messages" class="ai-messages"></div>
         <form id="ai-form" class="ai-form">

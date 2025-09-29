@@ -141,6 +141,62 @@ select {
   transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
+.password-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-container input {
+  padding-right: 3rem;
+  width: 100%;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.25rem;
+  border-radius: 6px;
+  transition: color 0.2s ease, background 0.2s ease;
+  z-index: 1;
+}
+
+.password-toggle:hover {
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.password-toggle:active {
+  transform: scale(0.95);
+}
+
+.dev-login {
+  background: linear-gradient(135deg, #ff6b6b, #ffb36b);
+  border: none;
+  color: var(--fg);
+  padding: 0.75rem 1.2rem;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.dev-login:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 15px 30px rgba(255, 107, 107, 0.4);
+}
+
+.dev-login:active {
+  transform: scale(0.98);
+}
+
 input:focus,
 select:focus {
   outline: none;

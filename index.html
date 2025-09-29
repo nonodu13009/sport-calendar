@@ -32,8 +32,12 @@
             <label>Email</label>
             <input type="email" id="login-email" placeholder="email@exemple.com" required />
             <label>Mot de passe</label>
-            <input type="password" id="login-password" placeholder="••••••••" required />
+            <div class="password-input-container">
+              <input type="password" id="login-password" placeholder="••••••••" required />
+              <button type="button" class="password-toggle" id="login-password-toggle" aria-label="Afficher le mot de passe">👁️</button>
+            </div>
             <button type="submit" class="primary">Se connecter</button>
+            <button type="button" class="dev-login" id="dev-login-btn">🚀 Connexion rapide (dev)</button>
             <p class="auth-hint">Mot de passe oublié ? <a href="#" id="reset-link">Réinitialiser</a></p>
           </form>
           <form id="signup-form" class="form">
@@ -42,7 +46,10 @@
             <label>Email</label>
             <input type="email" id="signup-email" placeholder="email@exemple.com" required />
             <label>Mot de passe</label>
-            <input type="password" id="signup-password" placeholder="••••••••" minlength="6" required />
+            <div class="password-input-container">
+              <input type="password" id="signup-password" placeholder="••••••••" minlength="6" required />
+              <button type="button" class="password-toggle" id="signup-password-toggle" aria-label="Afficher le mot de passe">👁️</button>
+            </div>
             <button type="submit" class="primary">Créer mon compte</button>
           </form>
         </div>

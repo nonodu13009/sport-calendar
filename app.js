@@ -551,6 +551,43 @@ function attachAuthHandlers() {
     });
   });
 
+  // Gestion de la visibilité des mots de passe
+  const loginPasswordInput = document.getElementById('login-password');
+  const loginPasswordToggle = document.getElementById('login-password-toggle');
+  const signupPasswordInput = document.getElementById('signup-password');
+  const signupPasswordToggle = document.getElementById('signup-password-toggle');
+
+  function togglePasswordVisibility(input, toggle) {
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    toggle.textContent = isPassword ? '🙈' : '👁️';
+    toggle.setAttribute('aria-label', isPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+  }
+
+  loginPasswordToggle.addEventListener('click', () => {
+    togglePasswordVisibility(loginPasswordInput, loginPasswordToggle);
+  });
+
+  signupPasswordToggle.addEventListener('click', () => {
+    togglePasswordVisibility(signupPasswordInput, signupPasswordToggle);
+  });
+
+  // Bouton de connexion rapide pour le développement
+  document.getElementById('dev-login-btn').addEventListener('click', async () => {
+    const email = 'jeanminono13@gmail.com';
+    const password = 'admin13009';
+    
+    // Pré-remplir les champs
+    document.getElementById('login-email').value = email;
+    document.getElementById('login-password').value = password;
+    
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      alert('Connexion rapide échouée. Vérifie que le compte existe.');
+    }
+  });
+
   document.getElementById('login-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     const email = document.getElementById('login-email').value;
